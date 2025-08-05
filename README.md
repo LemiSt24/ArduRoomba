@@ -2,6 +2,8 @@
 
 A minimal, focused Arduino library for iRobot Open Interface communication.
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/pkyanam/ArduRoomba)
+
 ## Design Philosophy
 
 - **Minimal Core**: Essential functionality only
