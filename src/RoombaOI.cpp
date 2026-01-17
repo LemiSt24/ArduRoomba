@@ -7,7 +7,13 @@
 
 RoombaOI::RoombaOI(uint8_t rxPin, uint8_t txPin, uint8_t brcPin)
   : _rxPin(rxPin), _txPin(txPin), _brcPin(brcPin), _connected(false), _debug(false) {
-  _serial = new SoftwareSerial(rxPin, txPin);
+    #ifdef ESP32
+      _hwSerial = new HardwareSerial(1);
+      _port = _hwSerial;
+    #else
+      _swSerial = new SoftwareSerial(rxPin, txPin);
+      _port = _swSerial;
+    #endif
 }
 
 bool RoombaOI::begin(uint32_t baudRate) {
@@ -27,7 +33,14 @@ bool RoombaOI::begin(uint32_t baudRate) {
   delay(100);
   
   // Start serial communication
-  _serial->begin(baudRate);
+  #ifdef ESP32
+  // Remap pins here: baud, config, RX, TX
+  // This maps your requested pins (RX=16, TX=0) to UART1
+    _hwSerial->begin(baudRate, SERIAL_8N1, _rxPin, _txPin);
+  #else
+    _swSerial->begin(baudRate);
+  #endif
+
   delay(100);
   
   // Send start command
@@ -46,7 +59,11 @@ bool RoombaOI::begin(uint32_t baudRate) {
 void RoombaOI::end() {
   if (_connected) {
     powerOff();
-    _serial->end();
+    #ifdef ESP32
+      _hwSerial->end();
+    #else
+      _swSerial->end();
+    #endif
     _connected = false;
   }
 }
@@ -181,7 +198,7 @@ bool RoombaOI::startSensorStream(const uint8_t* sensorList, uint8_t numSensors) 
   sendCommand(OI_STREAM, numSensors);
   
   for (uint8_t i = 0; i < numSensors; i++) {
-    _serial->write(sensorList[i]);
+    _port->write(sensorList[i]);
   }
   
   debugPrint("Sensor stream started", numSensors);
@@ -203,7 +220,7 @@ bool RoombaOI::readStreamData(uint8_t* buffer, uint8_t bufferSize) {
   // Wait for header byte (19)
   unsigned long timeout = millis() + 100;
   while (millis() < timeout) {
-    if (_serial->available() && _serial->read() == 19) {
+    if (_port->available() && _port->read() == 19) {
       // Found header, read size
       uint8_t size = readByte(50);
       if (size > 0 && size <= bufferSize) {
@@ -227,47 +244,47 @@ void RoombaOI::pulseDD() {
 
 void RoombaOI::sendCommand(uint8_t cmd) {
   if (_connected) {
-    _serial->write(cmd);
+    _port->write(cmd);
   }
 }
 
 void RoombaOI::sendCommand(uint8_t cmd, uint8_t param) {
   if (_connected) {
-    _serial->write(cmd);
-    _serial->write(param);
+    _port->write(cmd);
+    _port->write(param);
   }
 }
 
 void RoombaOI::sendCommand(uint8_t cmd, uint8_t param1, uint8_t param2) {
   if (_connected) {
-    _serial->write(cmd);
-    _serial->write(param1);
-    _serial->write(param2);
+    _port->write(cmd);
+    _port->write(param1);
+    _port->write(param2);
   }
 }
 
 void RoombaOI::sendCommand(uint8_t cmd, const uint8_t* params, uint8_t numParams) {
   if (_connected && params) {
-    _serial->write(cmd);
+    _port->write(cmd);
     for (uint8_t i = 0; i < numParams; i++) {
-      _serial->write(params[i]);
+      _port->write(params[i]);
     }
   }
 }
 
 void RoombaOI::sendInt16(int16_t value) {
   if (_connected) {
-    _serial->write((value >> 8) & 0xFF);
-    _serial->write(value & 0xFF);
+    _port->write((value >> 8) & 0xFF);
+    _port->write(value & 0xFF);
   }
 }
 
 uint8_t RoombaOI::readByte(uint16_t timeout) {
   unsigned long start = millis();
-  while (!_serial->available() && (millis() - start) < timeout) {
+  while (!_port->available() && (millis() - start) < timeout) {
     // Wait for data
   }
-  return _serial->available() ? _serial->read() : 0;
+  return _port->available() ? _port->read() : 0;
 }
 
 bool RoombaOI::readBytes(uint8_t* buffer, uint8_t numBytes, uint16_t timeout) {
@@ -277,8 +294,8 @@ bool RoombaOI::readBytes(uint8_t* buffer, uint8_t numBytes, uint16_t timeout) {
   uint8_t bytesRead = 0;
   
   while (bytesRead < numBytes && (millis() - start) < timeout) {
-    if (_serial->available()) {
-      buffer[bytesRead++] = _serial->read();
+    if (_port->available()) {
+      buffer[bytesRead++] = _port->read();
     }
   }
   

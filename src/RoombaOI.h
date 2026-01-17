@@ -10,7 +10,12 @@
 #define ROOMBAOI_H
 
 #include <Arduino.h>
-#include <SoftwareSerial.h>
+
+#ifdef ESP32
+  #include <HardwareSerial.h>
+#else
+  #include <SoftwareSerial.h>
+#endif
 
 // OI Command opcodes
 #define OI_START        128
@@ -97,21 +102,32 @@ public:
   bool stopSensorStream();
   bool readStreamData(uint8_t* buffer, uint8_t bufferSize);
   
+
+  // Internal helpers
+  void sendCommand(uint8_t cmd);
+  void sendCommand(uint8_t cmd, uint8_t param);
+  void sendCommand(uint8_t cmd, uint8_t param1, uint8_t param2);
+  void sendCommand(uint8_t cmd, const uint8_t* params, uint8_t numParams);
+
   // Debug
   void setDebug(bool enable) { _debug = enable; }
   
 private:
-  SoftwareSerial* _serial;
+
+  Stream* _port; // Polymorphic pointer (works for Soft and Hard serial)
+  #ifdef ESP32
+    HardwareSerial* _hwSerial;
+  #else
+    SoftwareSerial* _swSerial;
+  #endif
+
   uint8_t _rxPin, _txPin, _brcPin;
   bool _connected;
   bool _debug;
   
   // Internal helpers
   void pulseDD();
-  void sendCommand(uint8_t cmd);
-  void sendCommand(uint8_t cmd, uint8_t param);
-  void sendCommand(uint8_t cmd, uint8_t param1, uint8_t param2);
-  void sendCommand(uint8_t cmd, const uint8_t* params, uint8_t numParams);
+
   void sendInt16(int16_t value);
   
   uint8_t readByte(uint16_t timeout = 100);

@@ -13,8 +13,8 @@
 
 // WiFi operating modes
 enum WiFiMode {
-  WIFI_MODE_AP,      // Access Point - Roomba creates its own network
-  WIFI_MODE_CLIENT   // Client - Roomba connects to existing network
+  AR_WIFI_MODE_AP,      // Access Point - Roomba creates its own network
+  AR_WIFI_MODE_CLIENT   // Client - Roomba connects to existing network
 };
 
 // Command protocol for WiFi control

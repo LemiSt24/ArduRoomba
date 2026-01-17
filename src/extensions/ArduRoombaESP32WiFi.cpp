@@ -8,7 +8,7 @@
 #if defined(ESP32)
 
 ArduRoombaESP32WiFi::ArduRoombaESP32WiFi(ArduRoomba& roomba)
-  : ArduRoombaWiFi(roomba), _server(nullptr), _mode(WIFI_MODE_AP), _connected(false) {
+  : ArduRoombaWiFi(roomba), _server(nullptr), _mode(AR_WIFI_MODE_AP), _connected(false) {
 }
 
 ArduRoombaESP32WiFi::~ArduRoombaESP32WiFi() {
@@ -21,7 +21,7 @@ bool ArduRoombaESP32WiFi::beginAP(const char* ssid, const char* password) {
   Serial.print("Creating WiFi AP: ");
   Serial.println(ssid);
 
-  _mode = WIFI_MODE_AP;
+  _mode = AR_WIFI_MODE_AP;
 
   // Create access point
   bool success;
@@ -50,7 +50,7 @@ bool ArduRoombaESP32WiFi::beginClient(const char* ssid, const char* password) {
   Serial.print("Connecting to WiFi: ");
   Serial.println(ssid);
 
-  _mode = WIFI_MODE_CLIENT;
+  _mode = AR_WIFI_MODE_CLIENT;
 
   // Connect to WiFi
   WiFi.begin(ssid, password);
@@ -84,7 +84,7 @@ void ArduRoombaESP32WiFi::end() {
     _server = nullptr;
   }
 
-  if (_mode == WIFI_MODE_AP) {
+  if (_mode == AR_WIFI_MODE_AP) {
     WiFi.softAPdisconnect(true);
   } else {
     WiFi.disconnect(true);
@@ -94,14 +94,14 @@ void ArduRoombaESP32WiFi::end() {
 }
 
 bool ArduRoombaESP32WiFi::isConnected() const {
-  if (_mode == WIFI_MODE_CLIENT) {
+  if (_mode == AR_WIFI_MODE_CLIENT) {
     return WiFi.status() == WL_CONNECTED;
   }
   return _connected;
 }
 
 String ArduRoombaESP32WiFi::getIPAddress() const {
-  if (_mode == WIFI_MODE_AP) {
+  if (_mode == AR_WIFI_MODE_AP) {
     return WiFi.softAPIP().toString();
   }
   return WiFi.localIP().toString();
